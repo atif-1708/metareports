@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title }} - {% endif %}GOODIGITAL</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom color scheme configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#EFF6FF',
+                            100: '#DBEAFE',
+                            200: '#BFDBFE',
+                            300: '#93C5FD',
+                            400: '#60A5FA',
+                            500: '#3B82F6',
+                            600: '#2563EB',
+                            700: '#1D4ED8',
+                            800: '#1E40AF', /* Primary blue */
+                            900: '#1E3A8A',
+                        },
+                        teal: {
+                            500: '#0D9488', /* Accent teal */
+                        },
+                        success: {
+                            500: '#10B981',
+                        },
+                        warning: {
+                            500: '#F59E0B',
+                        },
+                        error: {
+                            500: '#EF4444',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts (San Francisco/Inter) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link {
+            @apply flex items-center px-4 py-2 text-gray-600 transition-all hover:bg-primary-100 hover:text-primary-800 rounded-md;
+        }
+        
+        .nav-link.active {
+            @apply bg-primary-100 text-primary-800 font-medium;
+        }
+        
+        .btn {
+            @apply px-4 py-2 rounded-md text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+        
+        .btn-primary {
+            @apply bg-primary-800 hover:bg-primary-700 focus:ring-primary-500;
+        }
+        
+        .btn-secondary {
+            @apply bg-teal-500 hover:bg-teal-600 focus:ring-teal-400;
+        }
+        
+        .btn-success {
+            @apply bg-success-500 hover:bg-green-600 focus:ring-green-400;
+        }
+        
+        .btn-warning {
+            @apply bg-warning-500 hover:bg-amber-600 focus:ring-amber-400;
+        }
+        
+        .btn-danger {
+            @apply bg-error-500 hover:bg-red-600 focus:ring-red-400;
+        }
+        
+        .card {
+            @apply bg-white rounded-lg shadow-md overflow-hidden;
+        }
+        
+        .form-control {
+            @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+        }
+        
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        
+        .form-group {
+            @apply mb-4;
+        }
+        
+        .form-error {
+            @apply mt-1 text-sm text-error-500;
+        }
+        
+        .notification {
+            @apply flex items-center p-4 mb-4 rounded-lg;
+        }
+        
+        .notification-info {
+            @apply bg-blue-100 text-blue-800;
+        }
+        
+        .notification-success {
+            @apply bg-green-100 text-green-800;
+        }
+        
+        .notification-warning {
+            @apply bg-yellow-100 text-yellow-800;
+        }
+        
+        .notification-danger {
+            @apply bg-red-100 text-red-800;
+        }
+        
+        .badge {
+            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+        }
+        
+        .badge-success {
+            @apply bg-green-100 text-green-800;
+        }
+        
+        .badge-warning {
+            @apply bg-yellow-100 text-yellow-800;
+        }
+        
+        .badge-danger {
+            @apply bg-red-100 text-red-800;
+        }
+        
+        .badge-info {
+            @apply bg-blue-100 text-blue-800;
+        }
+        
+        /* Mobile sidebar animation */
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
+        }
+        
+        .sidebar-open {
+            animation: slideIn 0.3s forwards;
+        }
+        
+        .sidebar-close {
+            animation: slideOut 0.3s forwards;
+        }
+    </style>
+    
+    <!-- Link to external CSS files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body class="bg-gray-50">
+    {% if current_user.is_authenticated %}
+    <!-- Main grid layout with fixed columns -->
+    <div class="md:grid md:grid-cols-[250px_1fr] min-h-screen">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden md:block bg-white border-r border-gray-200 h-screen overflow-y-auto">
+            <div class="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-primary-800">GOODIGITAL</h1>
+            </div>
+            
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-primary-800">
+                            <span class="text-lg font-medium leading-none text-white">
+                                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-base font-medium text-gray-700">
+                            {{ current_user.first_name }} {{ current_user.last_name }}
+                        </p>
+                        <p class="text-sm font-medium text-gray-500">
+                            {{ current_user.role.capitalize() }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="mt-4 px-4 space-y-2">
+                {% if current_user.role == 'admin' %}
+                <!-- Admin navigation -->
+<a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+    <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
+    <span>Dashboard</span>
+</a>
+<a href="{{ url_for('admin.employees') }}" class="nav-link {% if request.endpoint == 'admin.employees' %}active{% endif %}">
+    <i class="fas fa-users w-5 h-5 mr-3"></i>
+    <span>Employees</span>
+</a>
+<a href="{{ url_for('admin.all_reports') }}" class="nav-link {% if request.endpoint == 'admin.all_reports' %}active{% endif %}">
+    <i class="fas fa-file-alt w-5 h-5 mr-3"></i>
+    <span>All Reports</span>
+</a>
+<!-- Missing Reports navigation link with alert badge -->
+<!-- Missing Reports navigation link with alert badge -->
+<a href="{{ url_for('admin.missing_reports') }}" class="nav-link {% if request.endpoint == 'admin.missing_reports' %}active{% endif %}">     
+    <i class="fas fa-clipboard-list w-5 h-5 mr-3"></i>     <span>Missing Reports</span>    
+     {% set missing_count = MissingReport.query.filter_by(resolved=False).count() %}     
+     {% if missing_count > 0 %}     
+     <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-error-500 text-white rounded-full">{{ missing_count }}</span>
+     {% endif %} 
+    </a>
+<a href="{{ url_for('admin.settings') }}" class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+    <i class="fas fa-cog w-5 h-5 mr-3"></i>
+    <span>Settings</span>
+</a>
+                {% else %}
+                <!-- Employee navigation -->
+                <a href="{{ url_for('employee.dashboard') }}" class="nav-link {% if request.endpoint == 'employee.dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('employee.reports') }}" class="nav-link {% if request.endpoint == 'employee.reports' %}active{% endif %}">
+                    <i class="fas fa-file-alt w-5 h-5 mr-3"></i>
+                    <span>My Reports</span>
+                </a>
+                <a href="{{ url_for('employee.upload_report') }}" class="nav-link {% if request.endpoint == 'employee.upload_report' %}active{% endif %}">
+                    <i class="fas fa-upload w-5 h-5 mr-3"></i>
+                    <span>Upload Report</span>
+                </a>
+                {% endif %}
+                <hr class="my-4 border-gray-200" />
+                <a href="{{ url_for('main.notifications') }}" class="nav-link {% if request.endpoint == 'main.notifications' %}active{% endif %}">
+                    <i class="fas fa-bell w-5 h-5 mr-3"></i>
+                    <span>Notifications</span>
+                    {% if current_user.notifications.filter_by(is_read=False).count() > 0 %}
+                    <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-error-500 text-white rounded-full">
+                        {{ current_user.notifications.filter_by(is_read=False).count() }}
+                    </span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('auth.profile') }}" class="nav-link {% if request.endpoint == 'auth.profile' %}active{% endif %}">
+                    <i class="fas fa-user w-5 h-5 mr-3"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link">
+                    <i class="fas fa-sign-out-alt w-5 h-5 mr-3"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="flex flex-col min-h-screen">
+            <!-- Top navbar with mobile menu button -->
+            <div class="z-10 bg-white border-b border-gray-200 h-16 flex items-center px-4">
+                <button type="button" class="md:hidden text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 mr-3" id="sidebar-toggle">
+                    <span class="sr-only">Open sidebar</span>
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <h1 class="text-xl font-semibold text-gray-800">
+                    {% if title %}{{ title }}{% else %}GOODIGITAL{% endif %}
+                </h1>
+                
+                <div class="ml-auto flex items-center">
+                    <!-- Notification icon -->
+                    <a href="{{ url_for('main.notifications') }}" class="p-1 text-gray-400 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <span class="sr-only">View notifications</span>
+                        <i class="fas fa-bell"></i>
+                        {% if current_user.notifications.filter_by(is_read=False).count() > 0 %}
+                        <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-error-500"></span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            <div class="p-6 flex-grow">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="mb-8">
+                    {% for category, message in messages %}
+                    <div class="notification notification-{{ category }}">
+                        {% if category == 'success' %}
+                        <i class="fas fa-check-circle mr-3"></i>
+                        {% elif category == 'danger' %}
+                        <i class="fas fa-exclamation-circle mr-3"></i>
+                        {% elif category == 'warning' %}
+                        <i class="fas fa-exclamation-triangle mr-3"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle mr-3"></i>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile sidebar - overlay for small screens -->
+    <div id="mobile-sidebar" class="fixed inset-0 flex z-40 md:hidden" style="display: none;">
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity" id="sidebar-backdrop"></div>
+        
+        <div class="relative flex-1 flex flex-col max-w-xs w-full bg-white transform transition-all duration-300">
+            <div class="absolute top-0 right-0 -mr-12 pt-2">
+                <button type="button" class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" id="close-sidebar">
+                    <span class="sr-only">Close sidebar</span>
+                    <i class="fas fa-times text-white"></i>
+                </button>
+            </div>
+            
+            <div class="flex items-center justify-center h-16 px-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-primary-800">GOODIGITAL</h1>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto px-4 py-4">
+                <div class="flex items-center mb-4 pb-4 border-b border-gray-200">
+                    <div class="flex-shrink-0">
+                        <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-primary-800">
+                            <span class="text-lg font-medium leading-none text-white">
+                                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-base font-medium text-gray-700">
+                            {{ current_user.first_name }} {{ current_user.last_name }}
+                        </p>
+                        <p class="text-sm font-medium text-gray-500">
+                            {{ current_user.role.capitalize() }}
+                        </p>
+                    </div>
+                </div>
+                
+                <nav class="space-y-2">
+                    {% if current_user.role == 'admin' %}
+                    <!-- Admin navigation -->
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin.employees') }}" class="nav-link {% if request.endpoint == 'admin.employees' %}active{% endif %}">
+                        <i class="fas fa-users w-5 h-5 mr-3"></i>
+                        <span>Employees</span>
+                    </a>
+                    <a href="{{ url_for('admin.all_reports') }}" class="nav-link {% if request.endpoint == 'admin.all_reports' %}active{% endif %}">
+                        <i class="fas fa-file-alt w-5 h-5 mr-3"></i>
+                        <span>All Reports</span>
+                    </a>
+                    <a href="{{ url_for('admin.settings') }}" class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                        <i class="fas fa-cog w-5 h-5 mr-3"></i>
+                        <span>Settings</span>
+                    </a>
+                    {% else %}
+                    <!-- Employee navigation -->
+                    <a href="{{ url_for('employee.dashboard') }}" class="nav-link {% if request.endpoint == 'employee.dashboard' %}active{% endif %}">
+                        <i class="fas fa-chart-line w-5 h-5 mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('employee.reports') }}" class="nav-link {% if request.endpoint == 'employee.reports' %}active{% endif %}">
+                        <i class="fas fa-file-alt w-5 h-5 mr-3"></i>
+                        <span>My Reports</span>
+                    </a>
+                    <a href="{{ url_for('employee.upload_report') }}" class="nav-link {% if request.endpoint == 'employee.upload_report' %}active{% endif %}">
+                        <i class="fas fa-upload w-5 h-5 mr-3"></i>
+                        <span>Upload Report</span>
+                    </a>
+                    {% endif %}
+                    <hr class="my-4 border-gray-200" />
+                    <a href="{{ url_for('main.notifications') }}" class="nav-link {% if request.endpoint == 'main.notifications' %}active{% endif %}">
+                        <i class="fas fa-bell w-5 h-5 mr-3"></i>
+                        <span>Notifications</span>
+                        {% if current_user.notifications.filter_by(is_read=False).count() > 0 %}
+                        <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-error-500 text-white rounded-full">
+                            {{ current_user.notifications.filter_by(is_read=False).count() }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('auth.profile') }}" class="nav-link {% if request.endpoint == 'auth.profile' %}active{% endif %}">
+                        <i class="fas fa-user w-5 h-5 mr-3"></i>
+                        <span>Profile</span>
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+                        <i class="fas fa-sign-out-alt w-5 h-5 mr-3"></i>
+                        <span>Logout</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Not authenticated layout -->
+    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+            <h1 class="text-center text-3xl font-extrabold text-primary-800">GOODIGITAL</h1>
+            <h2 class="mt-2 text-center text-sm text-gray-600">
+                Employee Report Management System
+            </h2>
+        </div>
+        
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                    <div class="notification notification-{{ category }}">
+                        {% if category == 'success' %}
+                        <i class="fas fa-check-circle mr-3"></i>
+                        {% elif category == 'danger' %}
+                        <i class="fas fa-exclamation-circle mr-3"></i>
+                        {% elif category == 'warning' %}
+                        <i class="fas fa-exclamation-triangle mr-3"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle mr-3"></i>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+                
+                {% block auth_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <!-- Add this to your base.html file before your other scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    console.log("Chart.js loaded check: " + (typeof Chart !== 'undefined'));
+</script>
+    <!-- JavaScript for responsive sidebar -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const closeSidebar = document.getElementById('close-sidebar');
+            const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+            const mobileSidebar = document.getElementById('mobile-sidebar');
+            
+            if (sidebarToggle && closeSidebar && sidebarBackdrop && mobileSidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    mobileSidebar.style.display = 'flex';
+                    setTimeout(() => {
+                        mobileSidebar.querySelector('.flex-col').classList.add('sidebar-open');
+                    }, 10);
+                });
+                
+                function closeMobileSidebar() {
+                    const sidebarContent = mobileSidebar.querySelector('.flex-col');
+                    sidebarContent.classList.remove('sidebar-open');
+                    sidebarContent.classList.add('sidebar-close');
+                    
+                    setTimeout(() => {
+                        mobileSidebar.style.display = 'none';
+                        sidebarContent.classList.remove('sidebar-close');
+                    }, 300);
+                }
+                
+                closeSidebar.addEventListener('click', closeMobileSidebar);
+                sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+            }
+        });
+    </script>
+    
+    <!-- Link to external JS files -->
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+    <!-- Add this just before the closing </body> tag -->
+<footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500">
+    <div class="container mx-auto px-4">
+        <p>Developed With ❤️ By Atif Nazir</p>
+    </div>
+</footer>
+</body>
+</html>

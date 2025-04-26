@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Admin Notification Bar -->
+<div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-lg">
+    <div class="flex items-center">
+        <div class="flex-shrink-0">
+            <i class="fas fa-user-shield text-amber-500"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-amber-700">
+                <strong>Admin View:</strong> You are viewing report details for {{ employee.first_name }} {{ employee.last_name }}
+            </p>
+        </div>
+    </div>
+    <div class="mt-2 flex flex-wrap gap-4">
+        <a href="{{ url_for('admin.all_reports') }}" 
+           class="text-sm text-amber-700 hover:text-amber-900 hover:underline flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> Back to All Reports
+        </a>
+        <a href="{{ url_for('admin.employee_reports', employee_id=employee.id) }}" 
+           class="text-sm text-amber-700 hover:text-amber-900 hover:underline flex items-center">
+            <i class="fas fa-file-alt mr-2"></i> Employee's Reports
+        </a>
+    </div>
+</div>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-2xl font-bold text-blue-800">{{ report.title }}</h2>
+        <p class="text-blue-600 mt-1">{{ report.week_start.strftime('%d %b') }} - {{ report.week_end.strftime('%d %b %Y') }}</p>
+    </div>
+    <div class="flex space-x-2">
+        <a href="{{ url_for('admin.employee_reports', employee_id=employee.id) }}" 
+           class="btn bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-200">
+            <i class="fas fa-user mr-2"></i> Employee Reports
+        </a>
+        <a href="{{ url_for('admin.download_report', report_id=report.id) }}" 
+   class="btn bg-blue-600 hover:bg-blue-700 text-white">
+    <i class="fas fa-download mr-2"></i> Download Full Report (CSV)
+</a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    <!-- Report Info Card -->
+    <div class="lg:col-span-3">
+        <div class="card p-6 h-full border border-blue-100 bg-gradient-to-br from-blue-50 to-white">
+            <h3 class="text-lg font-semibold text-blue-800 mb-4">Report Details</h3>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <p class="text-sm font-medium text-blue-600">Week Period</p>
+                    <p class="text-base text-blue-900">{{ report.week_start.strftime('%d %b') }} - {{ report.week_end.strftime('%d %b %Y') }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-blue-600">Status</p>
+                    <p class="text-base">
+                        {% if report.approved %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Approved
+                        </span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                            <i class="fas fa-clock mr-1"></i> Pending
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-blue-600">Submitted On</p>
+                    <p class="text-base text-blue-900">
+                        {% if report.submitted_at %}
+                            {% if report.local_submitted_at is defined %}
+                                {{ report.local_submitted_at.strftime('%d %b %Y, %I:%M %p') }} 
+                            {% else %}
+                                {{ convert_to_karachi(report.submitted_at).strftime('%d %b %Y, %I:%M %p') }}
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Employee Info Card -->
+    <div class="lg:col-span-4">
+        <div class="card p-6 h-full border border-teal-100 bg-gradient-to-br from-teal-50 to-white">
+            <h3 class="text-lg font-semibold text-teal-800 mb-4">Employee Information</h3>
+            
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-teal-600 flex items-center justify-center">
+                    <span class="text-lg font-medium text-white">{{ employee.first_name[0] }}{{ employee.last_name[0] }}</span>
+                </div>
+                <div class="ml-4">
+                    <h4 class="text-lg font-medium text-teal-900">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                    <p class="text-sm text-teal-600">{{ employee.email }}</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm font-medium text-teal-600">Username</p>
+                    <p class="text-base text-teal-900">{{ employee.username }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-teal-600">Status</p>
+                    <p class="text-base">
+                        {% if employee.is_active %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-teal-600">Total Reports</p>
+                    <p class="text-base text-teal-900">{{ employee.reports.count() }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-teal-600">Joined</p>
+                    <p class="text-base text-teal-900">
+                        {% if employee.created_at %}
+                            {% if employee.local_created_at is defined %}
+                                {{ employee.local_created_at.strftime('%d %b %Y') }} 
+                            {% else %}
+                                {{ convert_to_karachi(employee.created_at).strftime('%d %b %Y') }} 
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Summary Card -->
+    <div class="lg:col-span-5">
+        <div class="card p-6 h-full border border-green-100 bg-gradient-to-br from-green-50 to-white">
+            <h3 class="text-lg font-semibold text-green-800 mb-4">Campaign Statistics</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p class="text-sm font-medium text-green-600">Total Campaigns</p>
+                    <p class="text-2xl font-semibold text-green-900">{{ stats.total_campaigns }}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p class="text-sm font-medium text-green-600">Total Purchases</p>
+                    <p class="text-2xl font-semibold text-green-900">{{ '{:,}'.format(stats.total_purchases) }}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p class="text-sm font-medium text-green-600">Total Cost</p>
+                    <p class="text-2xl font-semibold text-green-900">Rs {{ '{:,.2f}'.format(stats.total_cost) }}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p class="text-sm font-medium text-green-600">Avg. CPR</p>
+                    <p class="text-2xl font-semibold text-green-900">Rs {{ '{:.2f}'.format(stats.avg_cost_per_purchase) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Form -->
+<div class="card mb-6 border border-blue-100">
+    <div class="bg-blue-600 p-4 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-white">Report Approval</h3>
+    </div>
+    <div class="p-6 bg-white rounded-b-lg">
+        <form method="POST" action="{{ url_for('admin.toggle_report_approval', report_id=report.id) }}">
+            <div class="mb-4">
+                <label for="admin_notes" class="block text-sm font-medium text-blue-700 mb-1">Admin Notes</label>
+                <textarea id="admin_notes" name="admin_notes" rows="3" 
+                          class="form-control border-blue-200 focus:border-blue-500 w-full">{{ report.admin_notes or '' }}</textarea>
+                <p class="text-sm text-blue-500 mt-1">These notes will be visible to the employee.</p>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="btn {% if report.approved %}bg-amber-500 hover:bg-amber-600{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white">
+                    {% if report.approved %}
+                    <i class="fas fa-times-circle mr-2"></i> Mark as Unapproved
+                    {% else %}
+                    <i class="fas fa-check-circle mr-2"></i> Approve Report
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Campaign Stats Summary -->
+<div class="bg-blue-50 p-4 rounded-lg shadow mb-6 border border-blue-100">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="text-center p-3 border border-blue-200 rounded-lg bg-white">
+            <div class="text-sm font-medium text-blue-600">Total Campaigns</div>
+            <div class="text-2xl font-semibold text-blue-800">{{ stats.total_campaigns }}</div>
+        </div>
+        <div class="text-center p-3 border border-green-200 rounded-lg bg-green-50">
+            <div class="text-sm font-medium text-green-700">With Purchases</div>
+            <div class="text-2xl font-semibold text-green-800">{{ stats.total_non_zero_campaigns }}</div>
+        </div>
+        <div class="text-center p-3 border border-red-200 rounded-lg bg-red-50">
+            <div class="text-sm font-medium text-red-700">Zero Purchases</div>
+            <div class="text-2xl font-semibold text-red-800">{{ stats.total_zero_campaigns }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- CPR Distribution Card -->
+<div class="card border border-blue-100 mb-6">
+    <div class="bg-blue-600 p-4 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-white">Cost Per Purchase Distribution</h3>
+    </div>
+    <div class="p-6 bg-white rounded-b-lg">
+        {% if stats.total_campaigns > 0 %}
+        <div class="flex flex-col space-y-3">
+            <!-- Zero Purchases -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-blue-600">Zero Purchases</span>
+                    <span class="text-sm font-medium text-blue-900">
+                        {{ stats.total_zero_campaigns }} campaigns ({{ (stats.total_zero_campaigns / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-blue-100 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ (stats.total_zero_campaigns / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 1-200 -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-green-600">Rs 1-200</span>
+                    <span class="text-sm font-medium text-green-900">
+                        {{ stats.cpr_ranges.range_1_200 }} campaigns ({{ (stats.cpr_ranges.range_1_200 / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-green-100 rounded-full h-2.5">
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_1_200 / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 201-400 -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-blue-600">Rs 201-400</span>
+                    <span class="text-sm font-medium text-blue-900">
+                        {{ stats.cpr_ranges.range_201_400 }} campaigns ({{ (stats.cpr_ranges.range_201_400 / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-blue-100 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_201_400 / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 401-600 -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-amber-600">Rs 401-600</span>
+                    <span class="text-sm font-medium text-amber-900">
+                        {{ stats.cpr_ranges.range_401_600 }} campaigns ({{ (stats.cpr_ranges.range_401_600 / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-amber-100 rounded-full h-2.5">
+                    <div class="bg-amber-500 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_401_600 / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 601+ -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-red-600">Rs 601+</span>
+                    <span class="text-sm font-medium text-red-900">
+                        {{ stats.cpr_ranges.range_601_plus }} campaigns ({{ (stats.cpr_ranges.range_601_plus / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-red-100 rounded-full h-2.5">
+                    <div class="bg-red-600 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_601_plus / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Summary text -->
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700 border border-blue-200">
+            <p class="font-medium text-blue-800 mb-2">Summary:</p>
+            <p class="mb-2">Out of {{ stats.total_campaigns }} total campaigns:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>
+                    {{ stats.total_zero_campaigns }} campaigns ({{ (stats.total_zero_campaigns / stats.total_campaigns * 100) | round(1) }}%) have zero purchases.
+                </li>
+                {% if stats.cpr_ranges.range_1_200 > 0 %}
+                <li>
+                    {{ stats.cpr_ranges.range_1_200 }} campaigns ({{ (stats.cpr_ranges.range_1_200 / stats.total_campaigns * 100) | round(1) }}%) have excellent CPR (Rs 1-200).
+                </li>
+                {% endif %}
+                {% if stats.cpr_ranges.range_201_400 > 0 %}
+                <li>
+                    {{ stats.cpr_ranges.range_201_400 }} campaigns ({{ (stats.cpr_ranges.range_201_400 / stats.total_campaigns * 100) | round(1) }}%) have good CPR (Rs 201-400).
+                </li>
+                {% endif %}
+                {% if stats.cpr_ranges.range_401_600 > 0 %}
+                <li>
+                    {{ stats.cpr_ranges.range_401_600 }} campaigns ({{ (stats.cpr_ranges.range_401_600 / stats.total_campaigns * 100) | round(1) }}%) have average CPR (Rs 401-600).
+                </li>
+                {% endif %}
+                {% if stats.cpr_ranges.range_601_plus > 0 %}
+                <li>
+                    {{ stats.cpr_ranges.range_601_plus }} campaigns ({{ (stats.cpr_ranges.range_601_plus / stats.total_campaigns * 100) | round(1) }}%) have high CPR (Rs 601+).
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% else %}
+        <div class="text-center py-6">
+            <p class="text-blue-500">No campaign data available for this report.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Top Campaigns Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Top Campaigns by Purchases -->
+    <div class="card border border-blue-100">
+        <div class="bg-blue-600 p-4 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white">Top Campaigns by Purchases</h3>
+        </div>
+        <div class="p-4 bg-white rounded-b-lg" style="height: 350px;">
+            <canvas id="purchasesChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Top Campaigns by Cost Per Purchase -->
+    <div class="card border border-teal-100">
+        <div class="bg-teal-600 p-4 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white">Top Campaigns by Cost Per Purchase</h3>
+        </div>
+        <div class="p-4 bg-white rounded-b-lg" style="height: 350px;">
+            <canvas id="costChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Campaigns List -->
+<div class="card border border-blue-100 mb-6">
+    <div class="bg-blue-600 p-4 rounded-t-lg flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-white">Campaigns with Purchases</h3>
+        <div class="text-sm text-blue-100">Sorted by cost per purchase (low to high)</div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-blue-200">
+            <thead class="bg-blue-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Campaign Name</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Purchases</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Cost Per Purchase</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Total Cost</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-blue-100">
+                {% for campaign in stats.all_campaigns_by_cpr %}
+                <tr class="hover:bg-blue-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-blue-900">{{ campaign.campaign_name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-blue-900">{{ '{:,}'.format(campaign.purchases) }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-blue-900">Rs {{ '{:.2f}'.format(campaign.cost_per_purchase) }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-blue-900">Rs {{ '{:,.2f}'.format(campaign.purchases * campaign.cost_per_purchase) }}</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Zero Purchase Campaigns Section -->
+{% if stats.total_zero_campaigns > 0 %}
+<div class="card border border-blue-100">
+    <div class="bg-blue-600 p-4 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-white">Campaigns with Zero Purchases ({{ stats.total_zero_campaigns }})</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-blue-200">
+            <thead class="bg-blue-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Campaign Name</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Cost Per Purchase</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Total Cost</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-blue-100">
+                {% for campaign in stats.zero_purchase_campaigns %}
+                <tr class="hover:bg-blue-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-blue-900">{{ campaign.campaign_name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-blue-900">
+                            {% if campaign.cost_per_purchase is not none %}
+                                Rs {{ '{:.2f}'.format(campaign.cost_per_purchase) }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-blue-900">Rs {{ '{:.2f}'.format(campaign.cost_per_purchase) }}</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Top Campaigns by Purchases Chart
+    const purchasesCtx = document.getElementById('purchasesChart').getContext('2d');
+    new Chart(purchasesCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for campaign in stats.top_campaigns_by_purchases %}
+                '{{ campaign.campaign_name }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Purchases',
+                data: [
+                    {% for campaign in stats.top_campaigns_by_purchases %}
+                    {{ campaign.purchases }},
+                    {% endfor %}
+                ],
+                backgroundColor: '#1E40AF',
+                borderColor: '#1E40AF',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)',
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Top Campaigns by Cost Per Purchase Chart
+    const costCtx = document.getElementById('costChart').getContext('2d');
+    new Chart(costCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for campaign in stats.top_campaigns_by_cost_per_purchase %}
+                '{{ campaign.campaign_name }}',
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Cost Per Purchase (Rs)',
+                data: [
+                    {% for campaign in stats.top_campaigns_by_cost_per_purchase %}
+                    {{ campaign.cost_per_purchase }},
+                    {% endfor %}
+                ],
+                backgroundColor: '#0D9488',
+                borderColor: '#0D9488',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(200, 200, 200, 0.3)',
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rs ' + value.toLocaleString();
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Cost Per Purchase: Rs ' + context.parsed.x.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,879 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Date Filter Section -->
+<div class="card mb-6 border border-blue-100">
+    <div class="p-4 bg-blue-50 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">Filter Dashboard</h3>
+        <form method="GET" action="{{ url_for('employee.dashboard') }}" class="flex flex-col md:flex-row items-end space-y-4 md:space-y-0 md:space-x-4">
+            <div class="w-full md:w-auto">
+                <label for="start_date" class="block text-sm font-medium text-blue-700 mb-1">Start Date</label>
+                <input type="date" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}" class="form-control border-blue-200 focus:border-blue-500">
+            </div>
+            
+            <div class="w-full md:w-auto">
+                <label for="end_date" class="block text-sm font-medium text-blue-700 mb-1">End Date</label>
+                <input type="date" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}" class="form-control border-blue-200 focus:border-blue-500">
+            </div>
+            
+            <div class="w-full md:w-auto flex space-x-2">
+                <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white">
+                    <i class="fas fa-filter mr-2"></i>
+                    Apply Filter
+                </button>
+                
+                <a href="{{ url_for('employee.dashboard') }}" class="btn bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-200">
+                    <i class="fas fa-undo mr-2"></i>
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filter status indicator (when filters are active) -->
+{% if request.args.get('start_date') or request.args.get('end_date') %}
+<div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-info-circle text-blue-500"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-blue-700">
+                Showing filtered data
+                {% if request.args.get('start_date') %}
+                    from {{ request.args.get('start_date') }}
+                {% endif %}
+                {% if request.args.get('end_date') %}
+                    to {{ request.args.get('end_date') }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Summary Cards Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <!-- Reports Summary Card -->
+    <div class="card p-6 border border-blue-100 bg-gradient-to-br from-blue-50 to-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-blue-600">Total Reports</p>
+                <p class="text-2xl font-semibold text-blue-900">{{ stats.total_reports }}</p>
+            </div>
+            <div class="p-3 bg-blue-100 rounded-full">
+                <i class="fas fa-file-alt text-blue-600"></i>
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm font-medium text-blue-600">
+                {{ stats.approved_reports }} Approved
+            </p>
+            <div class="w-full bg-blue-100 rounded-full h-2 mt-1">
+                {% if stats.total_reports > 0 %}
+                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ (stats.approved_reports / stats.total_reports) * 100 }}%"></div>
+                {% else %}
+                <div class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Campaigns Summary Card -->
+    <div class="card p-6 border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-indigo-600">Total Campaigns</p>
+                <p class="text-2xl font-semibold text-indigo-900">{{ stats.total_campaigns }}</p>
+            </div>
+            <div class="p-3 bg-indigo-100 rounded-full">
+                <i class="fas fa-bullhorn text-indigo-600"></i>
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm font-medium text-indigo-600">
+                Across all reports
+            </p>
+        </div>
+    </div>
+    
+    <!-- Purchases Summary Card -->
+    <div class="card p-6 border border-teal-100 bg-gradient-to-br from-teal-50 to-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-teal-600">Total Purchases</p>
+                <p class="text-2xl font-semibold text-teal-900">{{ '{:,}'.format(stats.total_purchases) }}</p>
+            </div>
+            <div class="p-3 bg-teal-100 rounded-full">
+                <i class="fas fa-shopping-cart text-teal-600"></i>
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm font-medium text-teal-600">
+                Across all campaigns
+            </p>
+        </div>
+    </div>
+    
+    <!-- Total Cost Summary Card -->
+    <div class="card p-6 border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-cyan-600">Total Cost</p>
+                <p class="text-2xl font-semibold text-cyan-900">Rs {{ '{:,.2f}'.format(stats.total_cost) }}</p>
+            </div>
+            <div class="p-3 bg-cyan-100 rounded-full">
+                <i class="fas fa-dollar-sign text-cyan-600"></i>
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm font-medium text-cyan-600">
+                Avg. Rs {{ '{:.2f}'.format(stats.avg_cost_per_purchase) }} per purchase
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- CPR Distribution Card -->
+<div class="card mt-6 border border-blue-100">
+    <div class="bg-blue-600 p-4 rounded-t-lg">
+        <h3 class="text-lg font-semibold text-white">Cost Per Purchase Distribution</h3>
+    </div>
+    <div class="p-4 bg-white rounded-b-lg">
+        {% if stats.total_campaigns > 0 %}
+        <!-- Campaign Stats Summary in single row -->
+        <div class="bg-blue-50 p-4 rounded-lg shadow mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div class="text-center p-3 border border-blue-200 rounded-lg bg-white">
+                    <div class="text-sm font-medium text-blue-600">Total Campaigns</div>
+                    <div class="text-xl font-semibold text-blue-800">{{ stats.total_campaigns }}</div>
+                </div>
+                <div class="text-center p-3 border border-blue-200 rounded-lg bg-white">
+                    <div class="text-sm font-medium text-blue-600">Zero Purchases</div>
+                    <div class="text-xl font-semibold text-blue-800">{{ stats.total_zero_campaigns }} ({{ (stats.total_zero_campaigns / stats.total_campaigns * 100) | round(1) }}%)</div>
+                </div>
+                <div class="text-center p-3 border border-green-200 rounded-lg bg-green-50">
+                    <div class="text-sm font-medium text-green-700">Rs 1-200</div>
+                    <div class="text-xl font-semibold text-green-800">{{ stats.cpr_ranges.range_1_200 }} ({{ (stats.cpr_ranges.range_1_200 / stats.total_campaigns * 100) | round(1) }}%)</div>
+                </div>
+                <div class="text-center p-3 border border-blue-200 rounded-lg bg-blue-50">
+                    <div class="text-sm font-medium text-blue-700">Rs 201-400</div>
+                    <div class="text-xl font-semibold text-blue-800">{{ stats.cpr_ranges.range_201_400 }} ({{ (stats.cpr_ranges.range_201_400 / stats.total_campaigns * 100) | round(1) }}%)</div>
+                </div>
+                <div class="text-center p-3 border border-amber-200 rounded-lg bg-amber-50">
+                    <div class="text-sm font-medium text-amber-700">Rs 401-600</div>
+                    <div class="text-xl font-semibold text-amber-800">{{ stats.cpr_ranges.range_401_600 }} ({{ (stats.cpr_ranges.range_401_600 / stats.total_campaigns * 100) | round(1) }}%)</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mt-3">
+                <div class="md:col-span-4 text-center p-3 border border-red-200 rounded-lg bg-red-50">
+                    <div class="text-sm font-medium text-red-700">Rs 601+</div>
+                    <div class="text-xl font-semibold text-red-800">{{ stats.cpr_ranges.range_601_plus }} ({{ (stats.cpr_ranges.range_601_plus / stats.total_campaigns * 100) | round(1) }}%)</div>
+                </div>
+                <div class="text-center p-3 border border-blue-200 rounded-lg bg-white">
+                    <div class="text-sm font-medium text-blue-600">With Purchases</div>
+                    <div class="text-xl font-semibold text-blue-800">{{ stats.campaigns_with_purchases }} ({{ (stats.campaigns_with_purchases / stats.total_campaigns * 100) | round(1) }}%)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex flex-col space-y-3">
+            <!-- Zero Purchases -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-blue-600">Zero Purchases</span>
+                    <span class="text-sm font-medium text-blue-900">
+                        {{ stats.total_zero_campaigns }} campaigns ({{ (stats.total_zero_campaigns / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-blue-100 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ (stats.total_zero_campaigns / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 1-200 -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-green-600">Rs 1-200</span>
+                    <span class="text-sm font-medium text-green-900">
+                        {{ stats.cpr_ranges.range_1_200 }} campaigns ({{ (stats.cpr_ranges.range_1_200 / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-green-100 rounded-full h-2.5">
+                    <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_1_200 / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 201-400 -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-blue-600">Rs 201-400</span>
+                    <span class="text-sm font-medium text-blue-900">
+                        {{ stats.cpr_ranges.range_201_400 }} campaigns ({{ (stats.cpr_ranges.range_201_400 / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-blue-100 rounded-full h-2.5">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_201_400 / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 401-600 -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-amber-600">Rs 401-600</span>
+                    <span class="text-sm font-medium text-amber-900">
+                        {{ stats.cpr_ranges.range_401_600 }} campaigns ({{ (stats.cpr_ranges.range_401_600 / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-amber-100 rounded-full h-2.5">
+                    <div class="bg-amber-500 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_401_600 / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+            
+            <!-- CPR Range 601+ -->
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-red-600">Rs 601+</span>
+                    <span class="text-sm font-medium text-red-900">
+                        {{ stats.cpr_ranges.range_601_plus }} campaigns ({{ (stats.cpr_ranges.range_601_plus / stats.total_campaigns * 100) | round(1) }}%)
+                    </span>
+                </div>
+                <div class="w-full bg-red-100 rounded-full h-2.5">
+                    <div class="bg-red-600 h-2.5 rounded-full" style="width: {{ (stats.cpr_ranges.range_601_plus / stats.total_campaigns * 100) }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center py-6">
+            <p class="text-blue-500">No campaign data available for this report.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+    <!-- Recent Reports -->
+    <div class="card border border-blue-100">
+        <div class="bg-blue-600 p-4 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white">Recent Reports</h3>
+        </div>
+        <div class="p-4 bg-white rounded-b-lg">
+            {% if stats.recent_reports %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-blue-200">
+                    <thead class="bg-blue-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Title</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-blue-100">
+                        {% for report in stats.recent_reports %}
+                        <tr class="hover:bg-blue-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-blue-900">{{ report.title }}</div>
+                                <div class="text-sm text-blue-600">{{ report.week_start.strftime('%d %b') }} - {{ report.week_end.strftime('%d %b %Y') }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-blue-900">{{ report.submitted_at.strftime('%d %b %Y') }}</div>
+                                <div class="text-sm text-blue-600">{{ report.submitted_at.strftime('%I:%M %p') }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if report.approved %}
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+                                {% else %}
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="{{ url_for('employee.report_details', report_id=report.id) }}" class="text-blue-600 hover:text-blue-800">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="py-8 text-center">
+                <p class="text-blue-500">No reports submitted yet.</p>
+                <a href="{{ url_for('employee.upload_report') }}" class="btn bg-blue-600 hover:bg-blue-700 text-white mt-4">Upload First Report</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Top Campaigns (Lowest CPR) -->
+    <div class="card border border-blue-100">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-400 p-4 rounded-t-lg">
+            <h3 class="text-lg font-semibold text-white">Top Campaigns (Lowest CPR)</h3>
+        </div>
+        <div class="p-6 bg-white rounded-b-lg">
+            {% if stats.top_campaigns_by_lowest_cpr and stats.top_campaigns_by_lowest_cpr|length > 0 %}
+                <div style="height: 550px;" class="pb-4">
+                    <canvas id="topCampaignsLowestCPRChart"></canvas>
+                </div>
+            {% else %}
+                <div class="py-12 text-center">
+                    <div class="mb-4 text-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <p class="text-blue-500 text-lg">No campaign data available with purchases and CPR values.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="mt-8 flex flex-wrap gap-4">
+    <a href="{{ url_for('employee.upload_report') }}" class="btn bg-blue-600 hover:bg-blue-700 text-white">
+        <i class="fas fa-upload mr-2"></i>
+        Upload New Report
+    </a>
+    <a href="{{ url_for('employee.reports') }}" class="btn bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-200">
+        <i class="fas fa-file-alt mr-2"></i>
+        View All Reports
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if stats.top_campaigns %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Top Campaigns by Purchases Chart
+    const topCampaignsData = {
+        labels: [
+            {% for campaign in stats.top_campaigns[:10] %}
+            '{{ campaign.campaign_name }}',
+            {% endfor %}
+        ],
+        purchases: [
+            {% for campaign in stats.top_campaigns[:10] %}
+            {{ campaign.purchases }},
+            {% endfor %}
+        ],
+        costs: [
+            {% for campaign in stats.top_campaigns[:10] %}
+            {{ campaign.purchases * campaign.cost_per_purchase }},
+            {% endfor %}
+        ],
+        cpr: [
+            {% for campaign in stats.top_campaigns[:10] %}
+            {{ campaign.cost_per_purchase }},
+            {% endfor %}
+        ]
+    };
+
+    // Chart for Top Campaigns by Purchases
+    const purchasesCtx = document.getElementById('topCampaignsChart').getContext('2d');
+    const purchasesChart = new Chart(purchasesCtx, {
+        type: 'bar',
+        data: {
+            labels: topCampaignsData.labels,
+            datasets: [{
+                label: 'Purchases',
+                data: topCampaignsData.purchases,
+                backgroundColor: '#2563EB',
+                borderColor: '#1E40AF',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Chart for Top Campaigns by Cost
+    const costCtx = document.getElementById('topCampaignsCostChart').getContext('2d');
+    const costChart = new Chart(costCtx, {
+        type: 'bar',
+        data: {
+            labels: topCampaignsData.labels,
+            datasets: [{
+                label: 'Cost (Rs )',
+                data: topCampaignsData.costs,
+                backgroundColor: '#0D9488',
+                borderColor: '#0F766E',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Chart for Top Campaigns by Cost Per Result (CPR)
+    const cprCtx = document.getElementById('topCampaignsCPRChart').getContext('2d');
+    const cprChart = new Chart(cprCtx, {
+        type: 'bar',
+        data: {
+            labels: topCampaignsData.labels,
+            datasets: [{
+                label: 'Cost Per Result (Rs)',
+                data: topCampaignsData.cpr,
+                backgroundColor: '#2563EB',
+                borderColor: '#1E40AF',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Switch between metrics
+    const metricSelector = document.getElementById('topCampaignsMetric');
+    const purchasesDiv = document.getElementById('topCampaignsByPurchases');
+    const costDiv = document.getElementById('topCampaignsByCost');
+    const cprDiv = document.getElementById('topCampaignsByCPR');
+
+    metricSelector.addEventListener('change', function() {
+        // Hide all divs first
+        purchasesDiv.style.display = 'none';
+        costDiv.style.display = 'none';
+        cprDiv.style.display = 'none';
+        
+        // Show the selected div
+        if (this.value === 'purchases') {
+            purchasesDiv.style.display = 'block';
+        } else if (this.value === 'cost') {
+            costDiv.style.display = 'block';
+        } else if (this.value === 'cpr') {
+            cprDiv.style.display = 'block';
+        }
+    });
+
+        // Performance Over Time Chart (dummy data for now)
+        {% if stats.total_reports > 0 %}
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        
+        // Get report dates
+        const reportDates = [
+            {% for report in stats.recent_reports %}
+            '{{ report.submitted_at.strftime("%d %b") }}',
+            {% endfor %}
+        ];
+        
+        // Get report campaign counts
+        const campaignCounts = [
+            {% for report in stats.recent_reports %}
+            {{ report.campaigns.count() }},
+            {% endfor %}
+        ];
+        
+        // Get report purchase counts (dummy data for now)
+        const purchaseCounts = [
+            {% for report in stats.recent_reports %}
+            {% set purchase_sum = 0 %}
+            {% for campaign in report.campaigns %}
+            {% set purchase_sum = purchase_sum + campaign.purchases %}
+            {% endfor %}
+            {{ purchase_sum }},
+            {% endfor %}
+        ];
+        
+        new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: reportDates,
+                datasets: [
+                    {
+                        label: 'Purchases',
+                        data: purchaseCounts,
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Campaigns',
+                        data: campaignCounts,
+                        borderColor: '#0D9488',
+                        tension: 0.4,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+    // Data from backend
+    const totalCampaigns = {{ stats.total_campaigns }};
+    const campaignsWithPurchases = {{ stats.campaigns_with_purchases }};
+    const zeroPurchases = {{ stats.total_zero_campaigns }};
+    const cpr1to200 = {{ stats.cpr_ranges.range_1_200 }};
+    const cpr201to400 = {{ stats.cpr_ranges.range_201_400 }};
+    const cpr401to600 = {{ stats.cpr_ranges.range_401_600 }};
+    const cpr601plus = {{ stats.cpr_ranges.range_601_plus }};
+    
+    // Calculate percentages
+    const zeroPct = (zeroPurchases / totalCampaigns) * 100;
+    const withPurchasesPct = 100 - zeroPct;
+    
+    // Calculate CPR percentages based on campaigns with purchases only
+    const cpr1to200Pct = campaignsWithPurchases > 0 ? (cpr1to200 / campaignsWithPurchases) * 100 : 0;
+    const cpr201to400Pct = campaignsWithPurchases > 0 ? (cpr201to400 / campaignsWithPurchases) * 100 : 0;
+    const cpr401to600Pct = campaignsWithPurchases > 0 ? (cpr401to600 / campaignsWithPurchases) * 100 : 0;
+    const cpr601plusPct = campaignsWithPurchases > 0 ? (cpr601plus / campaignsWithPurchases) * 100 : 0;
+    
+    // Format percentages to one decimal place
+    const formatPct = (pct) => pct.toFixed(1);
+    
+    // Create overall distribution chart (zero vs with purchases)
+    const overallDistributionCtx = document.getElementById('overallDistributionChart').getContext('2d');
+    new Chart(overallDistributionCtx, {
+        type: 'pie',
+        data: {
+            labels: [
+                `Zero Purchases (${formatPct(zeroPct)}%)`,
+                `With Purchases (${formatPct(withPurchasesPct)}%)`
+            ],
+            datasets: [{
+                data: [zeroPurchases, campaignsWithPurchases],
+                backgroundColor: [
+                    '#9CA3AF', // gray for zero purchases
+                    '#2563EB'  // blue for campaigns with purchases
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Overall Campaign Distribution',
+                    font: {
+                        size: 16
+                    }
+                }
+            }
+        }
+    });
+    
+    // Create CPR distribution chart (only for campaigns with purchases)
+    if (campaignsWithPurchases > 0) {
+        const cprDistributionCtx = document.getElementById('cprDistributionChart').getContext('2d');
+        new Chart(cprDistributionCtx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    `Rs 1-200 (${formatPct(cpr1to200Pct)}%)`,
+                    `Rs 201-400 (${formatPct(cpr201to400Pct)}%)`,
+                    `Rs 401-600 (${formatPct(cpr401to600Pct)}%)`,
+                    `Rs 601+ (${formatPct(cpr601plusPct)}%)`
+                ],
+                datasets: [{
+                    data: [cpr1to200, cpr201to400, cpr401to600, cpr601plus],
+                    backgroundColor: [
+                        '#10B981', // green for 1-200
+                        '#2563EB', // blue for 201-400
+                        '#F59E0B', // yellow for 401-600
+                        '#EF4444'  // red for 601+
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'CPR Distribution (Campaigns with Purchases Only)',
+                        font: {
+                            size: 16
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the canvas element
+    const ctx = document.getElementById('topCampaignsCPRChart').getContext('2d');
+    
+    // Function to format currency in Indian Rupees
+    const formatCurrency = (value) => {
+        return '₹' + parseFloat(value).toFixed(2);
+    };
+    
+    // Get campaigns from your Flask template
+    const campaigns = {{ stats.top_campaigns | tojson | safe }};
+    
+    // Filter for campaigns with valid cost_per_purchase data
+    const validCampaigns = campaigns.filter(c => 
+        c.cost_per_purchase !== null && 
+        c.cost_per_purchase !== undefined && 
+        !isNaN(c.cost_per_purchase)
+    );
+    
+    // Sort by lowest CPR first
+    const sortedCampaigns = [...validCampaigns]
+        .sort((a, b) => a.cost_per_purchase - b.cost_per_purchase)
+        .slice(0, 10); // Get top 10 with lowest CPR
+    
+    if (sortedCampaigns.length > 0) {
+        // Create Chart.js bar chart
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sortedCampaigns.map(c => c.label),
+                datasets: [{
+                    label: 'Cost Per Result',
+                    data: sortedCampaigns.map(c => c.cost_per_purchase),
+                    backgroundColor: '#2563EB',
+                    borderColor: '#1E40AF',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Cost Per Result: ' + formatCurrency(context.raw);
+                            }
+                        }
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Cost Per Result (₹)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Display a message if no data is available
+        const noDataMsg = document.createElement('p');
+        noDataMsg.className = 'text-blue-500 text-center py-8';
+        noDataMsg.textContent = 'No campaigns with CPR data available.';
+        document.getElementById('topCampaignsByCPR').appendChild(noDataMsg);
+    }
+});
+// Add this to your JavaScript file or inside <script> tags in your employee dashboard template
+    document.addEventListener('DOMContentLoaded', function() {
+    // For the lowest CPR chart
+    if (document.getElementById('topCampaignsLowestCPRChart')) {
+        const cprCtx = document.getElementById('topCampaignsLowestCPRChart').getContext('2d');
+        
+        // Get the data and log it for debugging
+        const cprCampaigns = {{ stats.top_campaigns_by_lowest_cpr|tojson }};
+        console.log("CPR Campaigns data:", cprCampaigns);
+        
+        // Check if data exists and has entries
+        if (cprCampaigns && cprCampaigns.length > 0) {
+            // Get labels and data for the chart
+            const labels = cprCampaigns.map(c => c.name);
+            const data = cprCampaigns.map(c => c.cost_per_purchase);
+            
+            console.log("Chart labels:", labels);
+            console.log("Chart data:", data);
+            
+            // Create a gradient for the bars
+            const gradient = cprCtx.createLinearGradient(0, 0, 400, 0);
+            gradient.addColorStop(0, 'rgba(37, 99, 235, 0.9)');   // Blue-600
+            gradient.addColorStop(1, 'rgba(96, 165, 250, 0.7)');  // Blue-400
+            
+            new Chart(cprCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Cost Per Purchase (Rs)',
+                        data: data,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(30, 64, 175, 1)',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barThickness: 25,
+                        maxBarThickness: 35
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',  // This makes the bars horizontal
+                    layout: {
+                        padding: {
+                            left: 15,
+                            right: 25,
+                            top: 20,
+                            bottom: 20
+                        }
+                    },
+                    scales: {
+                        x: {  // Horizontal axis
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.3)',
+                                lineWidth: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Cost Per Purchase (PKR)',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                color: '#1E40AF',
+                                padding: {top: 10, bottom: 10}
+                            },
+                            ticks: {
+                                color: '#1E40AF',
+                                font: {
+                                    weight: 'bold'
+                                },
+                                callback: function(value) {
+                                    return 'Rs ' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        y: {  // Vertical axis (campaign names)
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Campaign',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                color: '#1E40AF',
+                                padding: {top: 10, bottom: 10}
+                            },
+                            ticks: {
+                                color: '#1E40AF',
+                                font: {
+                                    weight: 'bold'
+                                },
+                                padding: 10,
+                                autoSkip: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 64, 175, 0.9)',
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            padding: 12,
+                            cornerRadius: 6,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return tooltipItems[0].label;
+                                },
+                                label: function(context) {
+                                    return `Cost Per Purchase: Rs ${context.parsed.x.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        } else {
+            console.log("No CPR campaign data available or empty array");
+            // Display a message when no data is available
+            cprCtx.canvas.style.display = 'none';
+            const noDataMessage = document.createElement('p');
+            noDataMessage.className = 'text-center text-blue-500 py-8 text-lg';
+            noDataMessage.innerHTML = '<i class="fas fa-chart-bar mr-2"></i> No campaigns with valid CPR data available.';
+            cprCtx.canvas.parentNode.appendChild(noDataMessage);
+            
+            // Debug message without trying to serialize the entire stats object
+            console.log("No campaigns found with valid CPR data");
+        }
+    } else {
+        console.log("Element with ID 'topCampaignsLowestCPRChart' not found in document");
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

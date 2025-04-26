@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('admin.employees') }}" class="text-gray-600 hover:text-gray-900 flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Employees
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="border-b border-gray-200 p-4">
+            <h2 class="text-lg font-semibold text-gray-800">Add New Employee</h2>
+        </div>
+        <div class="p-6">
+            <form method="POST" action="{{ url_for('admin.new_employee') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-group">
+                        {{ form.first_name.label(class="form-label") }}
+                        {{ form.first_name(class="form-control", placeholder="John") }}
+                        {% if form.first_name.errors %}
+                        <div class="form-error">
+                            {% for error in form.first_name.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.last_name.label(class="form-label") }}
+                        {{ form.last_name(class="form-control", placeholder="Doe") }}
+                        {% if form.last_name.errors %}
+                        <div class="form-error">
+                            {% for error in form.last_name.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="john.doe@example.com") }}
+                    {% if form.email.errors %}
+                    <div class="form-error">
+                        {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.username.label(class="form-label") }}
+                    {{ form.username(class="form-control", placeholder="johndoe") }}
+                    {% if form.username.errors %}
+                    <div class="form-error">
+                        {% for error in form.username.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-group">
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control") }}
+                        {% if form.password.errors %}
+                        <div class="form-error">
+                            {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.confirm_password.label(class="form-label") }}
+                        {{ form.confirm_password(class="form-control") }}
+                        {% if form.confirm_password.errors %}
+                        <div class="form-error">
+                            {% for error in form.confirm_password.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between mt-6">
+                    <a href="{{ url_for('admin.employees') }}" class="text-gray-600 hover:text-gray-900">
+                        Cancel
+                    </a>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mt-8">
+        <div class="border-b border-gray-200 p-4">
+            <h3 class="text-lg font-semibold text-gray-800">Password Requirements</h3>
+        </div>
+        <div class="p-4">
+            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <li>Minimum 8 characters</li>
+                <li>Contains at least one uppercase letter</li>
+                <li>Contains at least one lowercase letter</li>
+                <li>Contains at least one number</li>
+                <li>Contains at least one special character</li>
+            </ul>
+            <p class="mt-4 text-sm text-gray-600">
+                Note: The employee will receive an email with their login credentials and will be prompted to change their password on first login.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

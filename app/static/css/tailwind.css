@@ -1,0 +1,95 @@
+/* Import Tailwind's utilities */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Custom components built with Tailwind */
+@layer components {
+  .card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden;
+  }
+  
+  .form-control {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  
+  .form-group {
+    @apply mb-4;
+  }
+  
+  .form-error {
+    @apply mt-1 text-sm text-red-500;
+  }
+  
+  .nav-link {
+    @apply flex items-center px-4 py-2 text-gray-600 transition-all hover:bg-primary-100 hover:text-primary-800 rounded-md w-full;
+  }
+  
+  .nav-link.active {
+    @apply bg-primary-100 text-primary-800 font-medium;
+  }
+  
+  .btn {
+    @apply px-4 py-2 rounded-md text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-800 hover:bg-primary-700 focus:ring-primary-500;
+  }
+  
+  .btn-secondary {
+    @apply bg-teal-500 hover:bg-teal-600 focus:ring-teal-400;
+  }
+  
+  .btn-success {
+    @apply bg-green-500 hover:bg-green-600 focus:ring-green-400;
+  }
+  
+  .btn-warning {
+    @apply bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-400;
+  }
+  
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 focus:ring-red-400;
+  }
+  
+  /* Grid Layout for main container */
+  .main-grid {
+    @apply md:grid md:grid-cols-[250px_1fr] min-h-screen;
+  }
+  
+  /* Sidebar styling */
+  .sidebar {
+    @apply hidden md:block bg-white border-r border-gray-200 h-screen overflow-y-auto;
+  }
+  
+  /* Navigation container */
+  .nav-container {
+    @apply mt-4 px-4 space-y-2 flex flex-col;
+  }
+  
+  /* Make sure navigation links are block level and take full width */
+  .nav-link {
+    @apply block w-full flex items-center px-4 py-2 text-gray-600 transition-all hover:bg-primary-100 hover:text-primary-800 rounded-md;
+  }
+  
+  /* Main content area */
+  .main-content {
+    @apply flex flex-col min-h-screen;
+  }
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+  nav {
+    width: 100%;
+  }
+  
+  .nav-link {
+    width: 100%;
+  }
+}

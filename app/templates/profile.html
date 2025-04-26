@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h2 class="text-xl font-bold text-gray-800 mb-6">My Profile</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Profile Summary Card -->
+        <div class="card p-6 text-center md:col-span-1">
+            <div class="flex justify-center mb-4">
+                <div class="h-24 w-24 rounded-full bg-primary-800 flex items-center justify-center">
+                    <span class="text-3xl font-medium text-white">{{ current_user.first_name[0] }}{{ current_user.last_name[0] }}</span>
+                </div>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</h3>
+            <p class="text-sm text-gray-500">{{ current_user.role.capitalize() }}</p>
+            
+            <hr class="my-4 border-gray-200" />
+            
+            <div class="text-left">
+                <div class="mb-2">
+                    <p class="text-xs font-medium text-gray-500 uppercase">Username</p>
+                    <p class="text-sm text-gray-900">{{ current_user.username }}</p>
+                </div>
+                <div class="mb-2">
+                    <p class="text-xs font-medium text-gray-500 uppercase">Email</p>
+                    <p class="text-sm text-gray-900">{{ current_user.email }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase">Member Since</p>
+                    <p class="text-sm text-gray-900">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-primary w-full">
+                    <i class="fas fa-key mr-2"></i>
+                    Change Password
+                </a>
+            </div>
+        </div>
+        
+        <!-- Edit Profile Card -->
+        <div class="card md:col-span-2">
+            <div class="border-b border-gray-200 p-4">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Profile</h3>
+            </div>
+            <div class="p-6">
+                <form method="POST" action="{{ url_for('auth.profile') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-group">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control") }}
+                        {% if form.email.errors %}
+                        <div class="form-error">
+                            {% for error in form.email.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+<!-- Account Information Card -->
+<!-- Account Information Card -->
+<div class="card mt-6">
+    <div class="border-b border-gray-200 p-4">
+        <h3 class="text-lg font-semibold text-gray-800">Account Information</h3>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% if current_user.role == 'employee' %}
+            <div>
+                <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Report Submission</h4>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-700">
+                        <strong>Weekly reports are due:</strong> Every {{ get_formatted_deadline() }}
+                    </p>
+                    <p class="text-sm text-gray-700 mt-2">
+                        Make sure to submit your reports on time to avoid missing the deadline.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div>
+                <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Last Login Activity</h4>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-700">
+                        <strong>Last login:</strong> {{ session.get('last_login', 'N/A') }}
+                    </p>
+                    <p class="text-sm text-gray-700 mt-2">
+                        If you notice any suspicious activity, please change your password immediately and contact an administrator.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        {% if current_user.role == 'employee' %}
+        <div class="mt-6">
+            <h4 class="text-sm font-medium text-gray-500 uppercase mb-2">Reports Summary</h4>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Reports</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ current_user.reports.count() }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Approved Reports</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ current_user.reports.filter_by(approved=True).count() }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Pending Reports</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ current_user.reports.filter_by(approved=False).count() }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}

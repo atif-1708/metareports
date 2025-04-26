@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="text-xl font-bold mb-4">Missing Reports</h2>
+
+{% if missing %}
+<div class="card">
+    <div class="mb-4 flex justify-between items-center">
+        <button onclick="sendReminders()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-bell mr-2"></i>Send Reminders to All
+        </button>
+        <span class="text-sm text-gray-600">{{ missing|length }} missing report(s) found</span>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Week</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for report in missing %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-500 text-white">
+                                    {{ report.user.first_name[0] }}{{ report.user.last_name[0] }}
+                                </span>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ report.user.first_name }} {{ report.user.last_name }}</div>
+                                <div class="text-sm text-gray-500">{{ report.user.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ report.report_week }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            {% if report.deadline_date %}
+                            {{ report.deadline_date.strftime('%Y-%m-%d %I:%M %p') }}
+                        {% else %}
+                            Deadline not set
+                        {% endif %}                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <a href="{{ url_for('admin.employee_details', employee_id=report.user_id) }}" 
+                               class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-user mr-1"></i>View
+                            </a>
+                            <button onclick="sendReminder('{{ report.user_id }}')" 
+                                    class="text-yellow-600 hover:text-yellow-900">
+                                <i class="fas fa-bell mr-1"></i>Remind
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    
+    function sendReminder(userId) {
+        if (confirm('Are you sure you want to send a reminder to this employee?')) {
+            fetch(`/admin/send-reminder/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', 'Reminder sent successfully!');
+                } else {
+                    showAlert('error', 'Failed to send reminder: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'An error occurred while sending the reminder');
+            });
+        }
+    }
+    
+    function sendReminders() {
+        if (confirm('Are you sure you want to send reminders to all employees with missing reports?')) {
+            fetch('/admin/send-reminders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', `Reminders sent successfully to ${data.count} employees!`);
+                } else {
+                    showAlert('error', 'Failed to send some reminders: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'An error occurred while sending the reminders');
+            });
+        }
+    }
+    
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+    </script>
+{% else %}
+<div class="bg-green-50 border-l-4 border-green-400 p-4">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-check-circle text-green-400"></i>
+        </div>
+        <div class="ml-3">
+            <p class="text-sm text-green-700">No missing reports! All employees have submitted their reports on time.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

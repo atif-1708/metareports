@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h2 class="text-xl font-bold text-gray-800 mb-6">System Settings</h2>
+
+    <!-- Report Deadline Settings -->
+    <div class="card mb-8">
+        <div class="border-b border-gray-200 p-4">
+            <h3 class="text-lg font-semibold text-gray-800">Report Deadline Settings</h3>
+        </div>
+        <div class="p-6">
+            <form method="POST" action="{{ url_for('admin.settings') }}">
+                {{ deadline_form.hidden_tag() }}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        {{ deadline_form.day_of_week.label(class="form-label") }}
+                        {{ deadline_form.day_of_week(class="form-control") }}
+                        {% if deadline_form.day_of_week.errors %}
+                        <div class="form-error">
+                            {% for error in deadline_form.day_of_week.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-1">
+                            Select the day of the week when reports are due.
+                        </p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Deadline Time</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                {{ deadline_form.hour(class="form-control") }}
+                                {% if deadline_form.hour.errors %}
+                                <div class="form-error">
+                                    {% for error in deadline_form.hour.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {{ deadline_form.minute(class="form-control") }}
+                                {% if deadline_form.minute.errors %}
+                                <div class="form-error">
+                                    {% for error in deadline_form.minute.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {{ deadline_form.am_pm(class="form-control") }}
+                                {% if deadline_form.am_pm.errors %}
+                                <div class="form-error">
+                                    {% for error in deadline_form.am_pm.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ deadline_form.reminder_hours_before.label(class="form-label") }}
+                    {{ deadline_form.reminder_hours_before(class="form-control", min=1, max=72) }}
+                    {% if deadline_form.reminder_hours_before.errors %}
+                    <div class="form-error">
+                        {% for error in deadline_form.reminder_hours_before.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="text-sm text-gray-500 mt-1">
+                        How many hours before the deadline should employees receive a reminder.
+                    </p>
+                </div>
+                
+                <!-- Timezone Information -->
+                <div class="mt-4 bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock text-blue-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                <strong>Timezone Information:</strong> All deadlines and notifications are set in Karachi time (UTC+5).
+                                Current time: <strong>{{ get_current_karachi_time().strftime('%I:%M %p') }}</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end mt-6">
+                    {{ deadline_form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Current Deadline Preview -->
+    <div class="card mb-8">
+        <div class="border-b border-gray-200 p-4">
+            <h3 class="text-lg font-semibold text-gray-800">Current Deadline Settings</h3>
+        </div>
+        <div class="p-6">
+            {% if current_deadline %}
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Day of Week:</p>
+                    <p class="font-medium">
+                        {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][current_deadline.day_of_week] }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Time:</p>
+                    <p class="font-medium">
+                        {{ current_deadline.hour }}:{{ '%02d'|format(current_deadline.minute) }} {{ current_deadline.am_pm }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Reminder Hours Before:</p>
+                    <p class="font-medium">{{ current_deadline.reminder_hours_before }} hours</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">24-hour Format:</p>
+                    <p class="font-medium">
+                        {{ current_deadline.get_24h_hour() }}:{{ '%02d'|format(current_deadline.minute) }}
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500">No deadline settings configured yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Notification Preview -->
+    <div class="card mb-8">
+        <div class="border-b border-gray-200 p-4">
+            <h3 class="text-lg font-semibold text-gray-800">Notification Preview</h3>
+        </div>
+        <div class="p-6">
+            {% if current_deadline %}
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            <strong>Reminder Notification:</strong> With the current settings, employees will receive a reminder 
+                            {{ current_deadline.reminder_hours_before }} hours before the deadline, which is set for 
+                            {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][current_deadline.day_of_week] }} 
+                            at {{ current_deadline.hour }}:{{ '%02d'|format(current_deadline.minute) }} {{ current_deadline.am_pm }} .
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="border border-gray-200 rounded-md">
+                <div class="border-b border-gray-200 bg-gray-50 px-4 py-2 flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                        <i class="fas fa-envelope text-blue-500"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900">Weekly Report Reminder</h4>
+                        <p class="text-xs text-gray-500">Sent to: employee@example.com</p>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div style="font-family: 'Arial', sans-serif; font-size: 14px; line-height: 1.5; color: #333;">
+                        <h3 style="font-size: 18px; margin-bottom: 12px; color: #1E40AF;">Weekly Report Reminder</h3>
+                        <p>Hello [Employee Name],</p>
+                        <p>This is a friendly reminder that your weekly report is due on 
+                        {% if current_deadline %}
+                            {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][current_deadline.day_of_week] }} 
+                            at {{ current_deadline.hour }}:{{ '%02d'|format(current_deadline.minute) }} {{ current_deadline.am_pm }} .
+                        {% else %}
+                            [Deadline Day] at [Time]
+                        {% endif %}
+                        </p>
+                        <p>Please ensure you submit your report on time.</p>
+                        <br>
+                        <p>Best regards,<br>GOODIGITAL Team</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Information -->
+<div class="card">
+    <div class="border-b border-gray-200 p-4">
+        <h3 class="text-lg font-semibold text-gray-800">System Information</h3>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock text-green-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-green-700">
+                            <strong>Current Timezone:</strong> Asia/Karachi (UTC+5)
+                        </p>
+                        <p class="text-sm text-green-700 mt-1">
+                            <strong>Current Server Time:</strong> {{ get_current_karachi_time().strftime('%Y-%m-%d %I:%M:%S %p') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

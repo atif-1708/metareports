@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+   
+    <!-- Back Button -->
+    <div class="mb-6">
+        <a href="{{ url_for('admin.employees') }}" class="flex items-center text-primary-600 hover:text-primary-800">
+            <i class="fas fa-arrow-left mr-2"></i>
+            <span>Back to Employees</span>
+        </a>
+    </div>
+    
+    <!-- Header with Employee Info -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+        <div class="flex items-center">
+            <div class="h-16 w-16 rounded-full bg-primary-800 flex items-center justify-center mr-4">
+                <span class="text-xl font-medium text-white">
+                    {{ employee.first_name[0] }}{{ employee.last_name[0] }}
+                </span>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">{{ employee.first_name }} {{ employee.last_name }}</h2>
+                <p class="text-gray-500">{{ employee.email }}</p>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex flex-wrap gap-4">
+             <!-- Add this button in the employee details actions section -->
+             <a href="{{ url_for('admin.employee_dashboard', employee_id=employee.id) }}" class="btn btn-primary">
+                <i class="fas fa-tachometer-alt mr-2"></i>
+                View Dashboard
+            </a>
+            <a href="{{ url_for('admin.employee_reports', employee_id=employee.id) }}" class="btn btn-primary mr-3">
+                <i class="fas fa-file-alt mr-2"></i>
+                View Reports
+            </a>
+        </div>
+    </div>
+    
+    <!-- Employee Details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Basic Info Card -->
+        <div class="card">
+            <div class="border-b border-gray-200 p-4">
+                <h3 class="text-lg font-semibold text-gray-800">Basic Information</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Username</p>
+                        <p class="mt-1">{{ employee.username }}</p>
+                    </div>
+                    {% if employee.is_active is defined %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Account Status</p>
+                        <p class="mt-1">
+                            {% if employee.is_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Member Since</p>
+                        <p class="mt-1">
+                            {% if employee.created_at %}
+                                {% if employee.local_created_at is defined %}
+                                    {{ employee.local_created_at.strftime('%B %d, %Y') }} 
+                                {% else %}
+                                    {{ convert_to_karachi(employee.created_at).strftime('%B %d, %Y') }} 
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if employee.last_login is defined %}
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Last Login</p>
+                        <p class="mt-1">
+                            {% if employee.last_login %}
+                                {% if employee.local_last_login is defined %}
+                                    {{ employee.local_last_login.strftime('%B %d, %Y at %I:%M %p') }} 
+                                {% else %}
+                                    {{ convert_to_karachi(employee.last_login).strftime('%B %d, %Y at %I:%M %p') }} 
+                                {% endif %}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activity Stats Card -->
+        <div class="card">
+            <div class="border-b border-gray-200 p-4">
+                <h3 class="text-lg font-semibold text-gray-800">Report Statistics</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Reports</p>
+                        <p class="mt-1 text-xl font-semibold text-gray-900">{{ stats.total_reports }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Approved Reports</p>
+                        <p class="mt-1 text-xl font-semibold text-green-600">{{ stats.approved_reports }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Pending Reports</p>
+                        <p class="mt-1 text-xl font-semibold text-blue-600">{{ stats.pending_reports }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Rejected Reports</p>
+                        <p class="mt-1 text-xl font-semibold text-red-600">{{ stats.rejected_reports }}</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">Average Response Time</p>
+                    <p class="mt-1 text-gray-900">{{ stats.avg_response_time }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity Card -->
+    <div class="card">
+        <div class="border-b border-gray-200 p-4">
+            <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+        </div>
+        <div class="p-6">
+            {% if employee.reports and employee.reports.count() > 0 %}
+                <ul class="divide-y divide-gray-200">
+                    {% for report in employee.reports.order_by(Report.submitted_at.desc()).limit(5).all() %}
+                        <li class="py-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        <a href="{{ url_for('admin.report_details', report_id=report.id) }}" class="hover:text-primary-800">
+                                            {{ report.title }}
+                                        </a>
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Submitted on 
+                                        {% if report.submitted_at %}
+                                            {% if report.local_submitted_at is defined %}
+                                                {{ report.local_submitted_at.strftime('%b %d, %Y at %I:%M %p') }} 
+                                            {% else %}
+                                                {{ convert_to_karachi(report.submitted_at).strftime('%b %d, %Y at %I:%M %p') }} 
+                                            {% endif %}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div>
+                                    {% if report.status == 'approved' %}
+                                        <span class="badge badge-success">Approved</span>
+                                    {% elif report.status == 'rejected' %}
+                                        <span class="badge badge-danger">Rejected</span>
+                                    {% else %}
+                                        <span class="badge badge-info">Pending</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('admin.employee_reports', employee_id=employee.id) }}" class="text-primary-600 hover:text-primary-800 font-medium">
+                        View All Reports
+                        <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-file-alt text-4xl"></i>
+                    </div>
+                    <p class="text-gray-500">No reports submitted by this employee yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

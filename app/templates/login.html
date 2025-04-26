@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<h2 class="text-xl font-bold text-gray-800 mb-6">Sign in to your account</h2>
+
+<form method="POST" action="{{ url_for('auth.login') }}" class="space-y-6">
+    {{ form.hidden_tag() }}
+    
+    <div class="form-group">
+        {{ form.username.label(class="form-label") }}
+        {{ form.username(class="form-control") }}
+        {% if form.username.errors %}
+        <div class="form-error">
+            {% for error in form.username.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.password.label(class="form-label") }}
+        {{ form.password(class="form-control") }}
+        {% if form.password.errors %}
+        <div class="form-error">
+            {% for error in form.password.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            {{ form.remember_me(class="h-4 w-4 text-primary-800 focus:ring-primary-500 border-gray-300 rounded") }}
+            {{ form.remember_me.label(class="ml-2 block text-sm text-gray-900") }}
+        </div>
+    </div>
+    
+    <div>
+        {{ form.submit(class="w-full btn btn-primary") }}
+    </div>
+</form>
+{% endblock %}
